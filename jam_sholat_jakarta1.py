@@ -9,12 +9,9 @@ import sys
 import time
 from datetime import date, datetime, timedelta, timezone
 
-# ============================================================
-# PENGATURAN
-# ============================================================
 KOTA = "JAKARTA"
-LAT, LON = -6.2088, 106.8456          # koordinat Jakarta
-WIB = timezone(timedelta(hours=7))     # Jakarta tidak pakai DST, selalu UTC+7
+LAT, LON = -6.2088, 106.8456         
+WIB = timezone(timedelta(hours=7))     
 
 FAJR_ANGLE = 20.0                      
 ISHA_ANGLE = 18.0                      
@@ -30,27 +27,19 @@ OFFSET_MENIT = {
     "Isya": 0,
 }
 
-# 2) Atau isi manual persis dari aplikasi/web Muslim Pro (format "HH:MM").
-#    Kalau diisi, nilai ini dipakai menggantikan hasil hitungan.
-#    Contoh: {"Subuh": "04:07", "Dzuhur": "11:50", ...}
-#    Catatan: isi manual hanya berlaku untuk hari itu saja, besoknya perlu diganti.
 MANUAL_TIMES = {}
 
-BUNYI_ADZAN = True                     # bunyi beep terminal saat masuk waktu sholat
-ADZAN_TAMPIL_DETIK = 60                # lama pesan "waktu sholat telah tiba" tampil
+BUNYI_ADZAN = True                     
+ADZAN_TAMPIL_DETIK = 60                
 
 HARI = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
 BULAN = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli",
          "Agustus", "September", "Oktober", "November", "Desember"]
 
-# Urutan waktu yang ditampilkan (Terbit hanya info, bukan waktu sholat)
 SHOLAT = ["Subuh", "Dzuhur", "Ashar", "Maghrib", "Isya"]
 SEMUA = ["Subuh", "Terbit", "Dzuhur", "Ashar", "Maghrib", "Isya"]
 
 
-# ============================================================
-# PERHITUNGAN ASTRONOMI
-# ============================================================
 def _sin(d): return math.sin(math.radians(d))
 def _cos(d): return math.cos(math.radians(d))
 def _tan(d): return math.tan(math.radians(d))
@@ -108,7 +97,6 @@ def _hitung_waktu_desimal(tanggal: date):
         angle = -_acot(factor + _tan(abs(LAT - decl)))
         return sun_angle_time(angle, t)
 
-    # perkiraan awal (jam / 24), lalu hitung
     fajr = sun_angle_time(FAJR_ANGLE, 5 / 24.0, ccw=True)
     sunrise = sun_angle_time(MAGHRIB_ANGLE, 6 / 24.0, ccw=True)
     dhuhr = mid_day(12 / 24.0)
@@ -136,7 +124,6 @@ def jadwal_hari(tanggal: date) -> dict:
         menit = round(mentah[nama] * 60) + OFFSET_MENIT.get(nama, 0)
         hasil[nama] = awal + timedelta(minutes=menit)
 
-    # override manual (hanya berlaku untuk hari ini)
     if MANUAL_TIMES and tanggal == datetime.now(WIB).date():
         for nama, jam in MANUAL_TIMES.items():
             if nama in hasil:
@@ -144,12 +131,6 @@ def jadwal_hari(tanggal: date) -> dict:
                 hasil[nama] = awal.replace(hour=h, minute=m)
     return hasil
 
-
-# ============================================================
-# JAM DIGITAL BESAR
-# ============================================================
-# Font 3 kolom x 5 baris. '#' = blok terisi. Tiap kolom digambar 2 karakter
-# lebar ("██") supaya bentuknya mendekati persegi.
 FONT = {
     "0": ["###", "# #", "# #", "# #", "###"],
     "1": [" # ", "## ", " # ", " # ", "###"],
@@ -177,14 +158,10 @@ def jam_besar(teks: str) -> list:
     return baris
 
 
-# ============================================================
-# TAMPILAN TERMINAL
-# ============================================================
 RESET, BOLD, DIM = "\033[0m", "\033[1m", "\033[2m"
 GREEN, YELLOW, CYAN, GREY = "\033[92m", "\033[93m", "\033[96m", "\033[90m"
-LEBAR = 50                              # lebar bingkai (jam besar = 47 kolom)
-PAD_JADWAL = 9                          # indent daftar jadwal sholat
-
+LEBAR = 50                              
+PAD_JADWAL = 9                          
 
 def _fmt_hms(td: timedelta) -> str:
     total = max(0, int(td.total_seconds()))
@@ -230,19 +207,16 @@ def render(sekarang: datetime, hari_ini: dict) -> str:
     b.append(_tengah(f"{KOTA}  ·  WIB (UTC+7)", DIM))
     b.append("")
 
-    # --- 1) jam digital besar ---
     if shutil.get_terminal_size((80, 24)).columns >= LEBAR:
         for baris in jam_besar(jam):
             b.append(_tengah(baris, BOLD + GREEN))
-    else:  # terminal terlalu sempit: tampilkan satu baris saja
+    else:  
         b.append(_tengah(jam, BOLD + GREEN))
     b.append("")
 
-    # --- 2) hari & tanggal (kecil) ---
     b.append(_tengah(tgl))
     b.append(_garis())
 
-    # --- 3) jadwal sholat ---
     for nama in SEMUA:
         w = hari_ini[nama]
         jam_str = w.strftime("%H:%M")
@@ -252,7 +226,7 @@ def render(sekarang: datetime, hari_ini: dict) -> str:
         elif nama == nama_berikut and waktu_berikut.date() == sekarang.date():
             b.append(f"{pad}{YELLOW}{BOLD}▶ {nama:<10}{jam_str}   ← berikutnya{RESET}")
         elif w <= sekarang:
-            b.append(f"{pad}{DIM}  {nama:<10}{jam_str}   ✓{RESET}")
+            b.append(f"{pad}  {nama:<10}{jam_str} ")
         else:
             b.append(f"{pad}  {nama:<10}{jam_str}")
 
@@ -277,9 +251,6 @@ def cetak_sekali():
         print(f"{nama:<8}{j[nama].strftime('%H:%M')}")
 
 
-# ============================================================
-# KUNCI TERMINAL: hanya Ctrl+C yang bisa keluar
-# ============================================================
 IS_WIN = os.name == "nt"
 if IS_WIN:
     import msvcrt
@@ -289,15 +260,9 @@ else:
 
 
 class KunciTerminal:
-    """
-    - masuk layar penuh (alternate screen), sembunyikan kursor
-    - matikan echo & mode baris -> ketikan tidak muncul di layar
-    - abaikan Ctrl+Z (suspend) dan Ctrl+\\ (quit); Ctrl+C tetap aktif
-    Semua dikembalikan seperti semula saat keluar.
-    """
 
     def __enter__(self):
-        os.system("") if IS_WIN else None            # aktifkan ANSI di Windows 10+
+        os.system("") if IS_WIN else None          
         self.fd = None
         self.lama = None
         self.sinyal_lama = {}
@@ -305,24 +270,24 @@ class KunciTerminal:
             self.fd = sys.stdin.fileno()
             self.lama = termios.tcgetattr(self.fd)
             baru = termios.tcgetattr(self.fd)
-            baru[3] &= ~(termios.ECHO | termios.ICANON)   # ISIG dibiarkan: Ctrl+C jalan
+            baru[3] &= ~(termios.ECHO | termios.ICANON)   
             termios.tcsetattr(self.fd, termios.TCSADRAIN, baru)
             for nama in ("SIGTSTP", "SIGQUIT"):
                 sig = getattr(signal, nama, None)
                 if sig is not None:
                     self.sinyal_lama[sig] = signal.signal(sig, signal.SIG_IGN)
-        sys.stdout.write("\033[?1049h\033[2J\033[?25l")    # layar penuh + sembunyikan kursor
+        sys.stdout.write("\033[?1049h\033[2J\033[?25l")    
         sys.stdout.flush()
         return self
 
     def __exit__(self, *exc):
-        sys.stdout.write("\033[?25h\033[0m\033[?1049l")    # kursor kembali + tutup layar penuh
+        sys.stdout.write("\033[?25h\033[0m\033[?1049l")    
         sys.stdout.flush()
         if self.fd is not None:
             termios.tcsetattr(self.fd, termios.TCSADRAIN, self.lama)
             for sig, handler in self.sinyal_lama.items():
                 signal.signal(sig, handler)
-        return exc[0] is KeyboardInterrupt                  # Ctrl+C = keluar normal, tanpa traceback
+        return exc[0] is KeyboardInterrupt                 
 
     def tunggu(self, detik: float):
         """Tunggu `detik` sambil membuang semua tombol yang ditekan."""
@@ -333,13 +298,13 @@ class KunciTerminal:
                 return
             if IS_WIN:
                 while msvcrt.kbhit():
-                    if msvcrt.getwch() == "\x03":           # Ctrl+C di Windows
+                    if msvcrt.getwch() == "\x03":           
                         raise KeyboardInterrupt
                 time.sleep(min(sisa, 0.05))
             elif self.fd is not None:
                 siap, _, _ = select.select([self.fd], [], [], sisa)
                 if siap:
-                    os.read(self.fd, 4096)                  # buang ketikan
+                    os.read(self.fd, 4096)                  
             else:
                 time.sleep(sisa)
 
@@ -370,7 +335,6 @@ def main():
                 sudah_bunyi = (cache_tgl, aktif)
             sys.stdout.flush()
 
-            # tunggu sampai pergantian detik berikutnya (jam tidak "loncat")
             term.tunggu(1.0 - (time.time() % 1.0))
 
 

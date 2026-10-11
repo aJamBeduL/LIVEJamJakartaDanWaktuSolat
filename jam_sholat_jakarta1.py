@@ -1,24 +1,4 @@
-#!/usr/bin/env python3
-"""
-Jam digital live Jakarta (WIB) + jadwal sholat di terminal.
-
-Tampilan (atas ke bawah):
-    1. Jam digital besar, live tiap detik
-    2. Hari + tanggal (kecil)
-    3. Jadwal sholat + hitung mundur ke sholat berikutnya
-
-- Tanpa library tambahan (hanya Python standar), jalan offline.
-- Jadwal dihitung langsung dari posisi matahari untuk koordinat Jakarta.
-- Default metode: Kemenag RI (Subuh 20 derajat, Isya 18 derajat, Ashar Syafi'i).
-- Mode layar penuh: satu-satunya cara keluar adalah Ctrl+C. Tombol lain
-  (huruf, Enter, Esc, Ctrl+D, Ctrl+Z, Ctrl+\\) diabaikan.
-
-Cara pakai:
-    python jam_sholat_jakarta.py          # tampilan live, Ctrl+C untuk keluar
-    python jam_sholat_jakarta.py --once   # cetak jadwal hari ini lalu selesai
-
-Supaya SAMA PERSIS dengan Muslim Pro, lihat bagian KALIBRASI di bawah.
-"""
+# py jam_sholat_jakarta1.py
 
 import argparse
 import math
@@ -36,15 +16,11 @@ KOTA = "JAKARTA"
 LAT, LON = -6.2088, 106.8456          # koordinat Jakarta
 WIB = timezone(timedelta(hours=7))     # Jakarta tidak pakai DST, selalu UTC+7
 
-FAJR_ANGLE = 20.0                      # Kemenag: 20 derajat
-ISHA_ANGLE = 18.0                      # Kemenag: 18 derajat
-ASR_FACTOR = 1                         # 1 = Syafi'i (bayangan = tinggi benda), 2 = Hanafi
-MAGHRIB_ANGLE = 0.833                  # matahari terbenam
+FAJR_ANGLE = 20.0                      
+ISHA_ANGLE = 18.0                      
+ASR_FACTOR = 1                         
+MAGHRIB_ANGLE = 0.833                  
 
-# ------------------------------------------------------------
-# KALIBRASI (opsional) - samakan dengan Muslim Pro
-# ------------------------------------------------------------
-# 1) Tambah/kurangi menit per waktu (mis. ihtiyath +2 menit):
 OFFSET_MENIT = {
     "Subuh": 0,
     "Terbit": 0,
